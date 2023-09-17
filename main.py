@@ -97,8 +97,7 @@ def run_server_socket():
         server_socket.close()
 
 def save_data(payload):
-    print(BASE_DIR.joinpath("storage/data.json"))
-    print(BASE_DIR)
+
     with rlock:
         with open(BASE_DIR.joinpath("data/storage/data.json"), "r", encoding="utf-8") as json_file:
             try:
@@ -123,7 +122,6 @@ def main():
     socket_s.start()
     http_s.start()
     event_stop.wait()
-
     socket_s.join()
     http_s.join()
 
