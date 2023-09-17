@@ -40,16 +40,16 @@ class HTTPHandler(BaseHTTPRequestHandler):
         route = urllib.parse.urlparse(self.path)
         match route.path:
             case "/":
-                self.send_html("HTML\index.html")
+                self.send_html("HTML/index.html")
             
             case "/message.html":
-                self.send_html("HTML\message.html")
+                self.send_html("HTML/message.html")
             case _:
                 file = BASE_DIR / route.path[1:]
                 if file.exists():
                     self.send_static(file)
                 else:
-                    self.send_html("HTML\error.html", STATUS_404)
+                    self.send_html("HTML/error.html", STATUS_404)
 
     def send_html(self, filename, status_code=STATUS_200):
         self.send_response(status_code)
@@ -97,9 +97,10 @@ def run_server_socket():
         server_socket.close()
 
 def save_data(payload):
-    
+    print(BASE_DIR.joinpath("storage/data.json"))
+    print(BASE_DIR)
     with rlock:
-        with open('storage\data.json', 'r', encoding="utf-8") as json_file:
+        with open(BASE_DIR.joinpath("data/storage/data.json"), "r", encoding="utf-8") as json_file:
             try:
                 data = json.load(json_file)
             except json.decoder.JSONDecodeError:
@@ -112,7 +113,7 @@ def save_data(payload):
     data.update(new_data)
 
     with rlock:
-        with open(BASE_DIR.joinpath("storage\data.json"), "w", encoding="utf-8") as fd:
+        with open(BASE_DIR.joinpath("data/storage/data.json"), "w", encoding="utf-8") as fd:
             json.dump(data, fd, ensure_ascii=False, indent=4)
         
 
