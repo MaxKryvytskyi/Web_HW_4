@@ -4,6 +4,7 @@ import mimetypes
 import socket
 import json
 import datetime
+import logging
 from http.server import HTTPServer, BaseHTTPRequestHandler 
 from threading import Thread, Event , RLock
 
@@ -20,13 +21,13 @@ STATUS_200 = 200
 STATUS_404 = 404
 STATUS_302 = 302
 
-def sending_in_socket(body): # ++++
+def sending_in_socket(body):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_socket.sendto(body.encode(),(HOST, SOCKET_PORT))
     client_socket.close()
 
 class HTTPHandler(BaseHTTPRequestHandler): 
-    def do_POST(self): # ++++
+    def do_POST(self): 
         body1 = self.rfile.read(int(self.headers["Content-Length"]))
         body = urllib.parse.unquote_plus(body1.decode())
 
@@ -36,7 +37,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
         self.send_header("Location", "/")
         self.end_headers()
 
-    def do_GET(self): # ++++
+    def do_GET(self): 
         route = urllib.parse.urlparse(self.path)
         match route.path:
             case "/":
@@ -71,22 +72,25 @@ class HTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(f.read())
 
 def run_HTTPServer(server=HTTPServer, handler=HTTPHandler):
+    logging.info("Starts HTTP Server")
     address = (HOST_0, HTTP_PORT)
     http_server = server(address, handler)
     try:
         http_server.serve_forever()
     except KeyboardInterrupt:
+        logging.info("Stops HTTP Server")
         http_server.server_close()
 
 
 def run_server_socket():
+    logging.info("Starts Socket Server")
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
     server_socket.bind((HOST, SOCKET_PORT))
     try:
         while not event_stop.is_set():
             conn, address = server_socket.recvfrom(BUFER_1024)
             payload = conn.decode()
-
+            logging.info(f"{address}")
             if not payload:
                 break
             save_data(payload)
@@ -94,9 +98,11 @@ def run_server_socket():
     except KeyboardInterrupt:
         pass
     finally:
+        logging.info("Stop Socket Server")
         server_socket.close()
 
 def save_data(payload):
+    logging.info("Start Saves")
 
     with rlock:
         with open(BASE_DIR.joinpath("data/storage/data.json"), "r", encoding="utf-8") as json_file:
@@ -126,4 +132,11 @@ def main():
     http_s.join()
 
 if __name__ == "__main__":
+    logging.basicConfig(
+    format='%(asctime)s %(message)s',
+    level=logging.INFO,
+        handlers=[
+        logging.FileHandler("program.log"),
+        logging.StreamHandler()
+    ])
     main()
